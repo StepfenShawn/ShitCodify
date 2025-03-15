@@ -212,7 +212,6 @@ const closeConfigModal = () => {
       <!-- 编辑器区域 -->
       <div class="editors">
         <div class="editor-container">
-          <h3>源代码</h3>
           <CodeEditor 
             v-model="sourceCode" 
             :language="selectedLanguage"
@@ -300,7 +299,6 @@ html, body {
   flex-direction: column;
   overflow: hidden;
   padding: 16px;
-  width: calc(100% - 250px);
   height: 100%;
   box-sizing: border-box;
 }
@@ -311,6 +309,7 @@ html, body {
   gap: 16px;
   overflow: hidden;
   height: 100%;
+  width: 100%;
 }
 
 .editor-panel {

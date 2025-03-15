@@ -61,7 +61,7 @@ const props = defineProps({
   },
   accept: {
     type: String,
-    default: '.js,.ts,.py,.java,.cpp,.rs,.go'
+    default: '.js,.ts,.py,.java,.cpp,.rs,.go,.ml'
   },
   multiple: {
     type: Boolean,
@@ -218,10 +218,22 @@ const handleFileUpload = (event: Event) => {
   flex: 1;
   overflow: hidden;
   position: relative;
+  width: 100%;
+  height: 100%;
 }
 
 /* 确保 Monaco 编辑器正确填充容器 */
 :deep(.monaco-editor) {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+:deep(.monaco-editor .monaco-scrollable-element) {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+:deep(.monaco-editor .editor-container) {
   width: 100% !important;
   height: 100% !important;
 }

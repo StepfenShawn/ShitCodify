@@ -176,6 +176,9 @@ onMounted(() => {
   flex: 1;
   overflow: auto;
   padding: 16px;
+  width: 100%;
+  height: calc(100% - 50px);
+  box-sizing: border-box;
 }
 
 .markdown-editor {
@@ -191,12 +194,19 @@ onMounted(() => {
   font-size: 14px;
   line-height: 1.5;
   resize: none;
+  box-sizing: border-box;
+}
+
+.editor-container {
+  width: 100%;
+  height: 100%;
 }
 
 .markdown-container {
   color: #e0e0e0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   line-height: 1.6;
+  width: 100%;
 }
 
 /* Markdown 样式 */
