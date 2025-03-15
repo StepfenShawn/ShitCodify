@@ -49,6 +49,7 @@ const props = defineProps({
 
 const emit = defineEmits(['file-select']);
 
+// 默认展开目录
 const isExpanded = ref(true);
 const isSelected = computed(() => props.selectedPath === props.file.path);
 
@@ -90,6 +91,7 @@ const handleFileSelect = (file: FileNode) => {
 
 .is-selected {
   background-color: #3a3a3a;
+  font-weight: bold;
 }
 
 .node-icon {

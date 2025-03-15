@@ -1,8 +1,5 @@
 <template>
   <div class="file-tree">
-    <div class="file-tree-header">
-      <h3>项目文件</h3>
-    </div>
     <div class="file-tree-content">
       <div v-if="files.length === 0" class="empty-message">
         <div class="empty-icon">📁</div>
@@ -61,24 +58,9 @@ const handleFileSelect = (file: FileNode) => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  border: 1px solid #333;
-  border-radius: 6px;
   overflow: hidden;
   background-color: #1e1e1e;
   color: #e0e0e0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.file-tree-header {
-  padding: 10px 16px;
-  background-color: #2a2a2a;
-  border-bottom: 1px solid #333;
-}
-
-.file-tree-header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 500;
 }
 
 .file-tree-content {

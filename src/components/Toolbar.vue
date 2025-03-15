@@ -20,7 +20,7 @@
         :disabled="!canConvert"
       >
         <span class="button-icon">🔄</span>
-        转换代码
+        生成提示
       </button>
       <div class="copy-status" v-if="copyStatus">{{ copyStatus }}</div>
     </div>

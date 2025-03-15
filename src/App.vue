@@ -14,10 +14,12 @@ const selectedLanguage = ref('javascript');
 const projectFiles = ref<FileNode[]>([]);
 const selectedFile = ref<FileNode | null>(null);
 const showConfigModal = ref(false);
+const showSidebar = ref(true); // 控制侧边栏显示状态
 
 // 计算属性
 const canConvert = computed(() => sourceCode.value.trim().length > 0);
 const selectedFilePath = computed(() => selectedFile.value?.path || '');
+const hasSidebar = computed(() => projectFiles.value.length > 0 && showSidebar.value);
 
 // 配置
 const config = reactive({
@@ -73,6 +75,9 @@ const handleFileUpload = (files: File[]) => {
         // 添加到文件树
         projectFiles.value = [fileToNode(file)];
         selectedFile.value = projectFiles.value[0];
+        
+        // 确保侧边栏显示
+        showSidebar.value = true;
       }
     };
     reader.readAsText(file);
@@ -85,6 +90,9 @@ const handleFileUpload = (files: File[]) => {
     if (firstFile) {
       selectedFile.value = firstFile;
       loadFileContent(firstFile, files);
+      
+      // 确保侧边栏显示
+      showSidebar.value = true;
     }
   }
 };
@@ -177,13 +185,18 @@ const setLanguageFromExtension = (extension: string) => {
   }
 };
 
-// const handleLanguageChange = (language: string) => {
-//   selectedLanguage.value = language;
-// };
+// 切换侧边栏显示状态
+const toggleSidebar = () => {
+  showSidebar.value = !showSidebar.value;
+};
 
-// const handleConfigChange = (newConfig: any) => {
-//   config.shitty_code_settings = newConfig.shitty_code_settings;
-// };
+const handleLanguageChange = (language: string) => {
+  selectedLanguage.value = language;
+};
+
+const handleConfigChange = (newConfig: any) => {
+  config.shitty_code_settings = newConfig.shitty_code_settings;
+};
 
 const closeConfigModal = () => {
   showConfigModal.value = false;
@@ -201,7 +214,13 @@ const closeConfigModal = () => {
     <!-- 主内容区域 -->
     <div class="main-content">
       <!-- 侧边栏 -->
-      <div class="sidebar" v-if="projectFiles.length > 0">
+      <div class="sidebar" v-if="hasSidebar">
+        <div class="sidebar-header">
+          <h3>项目文件</h3>
+          <button class="sidebar-toggle" @click="toggleSidebar" title="隐藏侧边栏">
+            <span>◀</span>
+          </button>
+        </div>
         <FileTree 
           :files="projectFiles" 
           @file-select="handleFileSelect"
@@ -209,8 +228,18 @@ const closeConfigModal = () => {
         />
       </div>
       
+      <!-- 侧边栏切换按钮 -->
+      <button 
+        v-if="projectFiles.length > 0 && !showSidebar" 
+        class="sidebar-show-button"
+        @click="toggleSidebar"
+        title="显示侧边栏"
+      >
+        <span>▶</span>
+      </button>
+      
       <!-- 编辑器区域 -->
-      <div class="editors">
+      <div class="editors" :class="{ 'with-sidebar': hasSidebar }">
         <div class="editor-container">
           <CodeEditor 
             v-model="sourceCode" 
@@ -282,15 +311,80 @@ html, body {
   overflow: hidden;
   width: 100%;
   height: calc(100vh - 60px);
+  position: relative;
 }
 
 .sidebar {
   width: 250px;
   min-width: 200px;
-  overflow: auto;
+  overflow: hidden;
   border-right: 1px solid #333;
   background-color: #1e1e1e;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background-color: #2a2a2a;
+  border-bottom: 1px solid #333;
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.sidebar-toggle {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.sidebar-toggle:hover {
+  color: #e0e0e0;
+  background-color: #3a3a3a;
+}
+
+.sidebar-show-button {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #2a2a2a;
+  border: none;
+  border-right: 1px solid #333;
+  color: #888;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 8px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+  z-index: 5;
+  transition: all 0.2s ease;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-show-button:hover {
+  color: #e0e0e0;
+  background-color: #3a3a3a;
 }
 
 .editor-container {
@@ -310,6 +404,12 @@ html, body {
   overflow: hidden;
   height: 100%;
   width: 100%;
+  transition: width 0.3s ease, margin-left 0.3s ease;
+  padding-left: 0;
+}
+
+.editors.with-sidebar {
+  width: calc(100% - 250px);
 }
 
 .editor-panel {
@@ -451,10 +551,24 @@ html, body {
     border-bottom: 1px solid #333;
   }
   
+  .editors.with-sidebar {
+    width: 100%;
+    height: calc(100% - 200px);
+  }
+  
   .editor-container {
     width: 100%;
     height: calc(100% - 200px);
     padding: 8px;
+  }
+  
+  .sidebar-show-button {
+    top: 200px;
+    left: 50%;
+    transform: translateX(-50%) rotate(90deg);
+    border-radius: 0 0 4px 4px;
+    border-right: none;
+    border-top: 1px solid #333;
   }
 }
 </style>

@@ -24,74 +24,60 @@ interface ShittyCodeConfig {
   };
 }
 
+// 导入模板文件
+import promptTemplate from '../prompt/promptTemplate.md?raw';
+// 导入语言策略
+import getLanguageStrategy from '../prompt/languages';
+
 export function generatePrompt(
   code: string,
   language: string,
   config: ShittyCodeConfig,
   files?: FileNode[]
 ): string {
-  // 基础提示模板
-  const basePrompt = `# 屎山代码生成器 Prompt
-
-你是一个专业的"屎山代码"生成器，你的任务是将正常的、干净的代码转换成可读性差、维护性差但仍然能够正确运行的代码。请遵循以下原则：
-
-1. **保持功能正确性**：${config.shitty_code_settings.preserve_functionality ? '无论如何修改，代码必须保持原有的功能，能够正确运行并产生相同的输出。' : '尽量保持原有功能，但可以适当引入一些不影响主要功能的小问题。'}
-
-2. **命名混乱化**：
-   ${getVariableNamingTechniques(config.shitty_code_settings.variable_naming_style)}
-
-3. **结构复杂化**：
-   - 使用过度嵌套的条件语句和循环
-   - 使用不必要的全局变量
-   - 将简单逻辑拆分成多个不必要的函数或合并不相关的功能
-   - 滥用三元运算符、嵌套三元运算符
-
-4. **注释混淆**：
-   ${getCommentTechniques(config.shitty_code_settings.comment_style)}
-
-5. **代码冗余**：
-   - 添加不必要的临时变量
-   - 重复计算可缓存的值
-   - 使用冗长的表达式替代简洁表达式
-
-6. **语言特定技巧**：
-   ${getLanguageSpecificTechniques(language)}
-
-7. **格式混乱**：
-   - 不一致的缩进
-   - 过长的行
-   - 不规则的空行和空格
-
-8. **"聪明"技巧**：
-   - 使用晦涩难懂的语言特性和技巧
-   - 使用不常见的库函数或语言特性
-   - 实现本可以用标准库完成的功能
-
-转换级别: ${getTransformationLevelDescription(config.shitty_code_settings.transformation_level)}
-
-请根据提供的代码，应用上述原则将其转换为"屎山代码"。转换后的代码应当难以理解和维护，但必须保持功能完全相同且能够正确运行。
-
-${config.shitty_code_settings.add_easter_eggs ? '请在代码中添加一些有趣的彩蛋或隐藏的注释，但不要影响代码的功能。' : ''}
-
-以下是需要转换的代码：
-
-\`\`\`${language}
-${code}
-\`\`\`
-`;
-
-  // 如果有多个文件，添加文件结构信息
+  // 替换模板中的变量
+  let prompt = promptTemplate;
+  
+  // 替换保持功能正确性
+  const preserveFunctionality = config.shitty_code_settings.preserve_functionality
+    ? '无论如何修改，代码必须保持原有的功能，能够正确运行并产生相同的输出。'
+    : '尽量保持原有功能，但可以适当引入一些不影响主要功能的小问题。';
+  prompt = prompt.replace('{{preserve_functionality}}', preserveFunctionality);
+  
+  // 替换变量命名技巧
+  prompt = prompt.replace('{{variable_naming_techniques}}', getVariableNamingTechniques(config.shitty_code_settings.variable_naming_style));
+  
+  // 替换注释技巧
+  prompt = prompt.replace('{{comment_techniques}}', getCommentTechniques(config.shitty_code_settings.comment_style));
+  
+  // 替换语言特定技巧
+  prompt = prompt.replace('{{language_specific_techniques}}', getLanguageStrategy(language));
+  
+  // 替换转换级别
+  prompt = prompt.replace('{{transformation_level}}', getTransformationLevelDescription(config.shitty_code_settings.transformation_level));
+  
+  // 替换彩蛋
+  const easterEggs = config.shitty_code_settings.add_easter_eggs
+    ? '请在代码中添加一些有趣的彩蛋或隐藏的注释，但不要影响代码的功能。'
+    : '';
+  prompt = prompt.replace('{{easter_eggs}}', easterEggs);
+  
+  // 替换代码
+  prompt = prompt.replace('{{language}}', language);
+  prompt = prompt.replace('{{code}}', code);
+  
+  // 替换文件结构
+  let fileStructure = '';
   if (files && files.length > 1) {
-    const fileStructure = generateFileStructureDescription(files);
-    return `${basePrompt}
-
+    fileStructure = `
 项目文件结构：
-${fileStructure}
+${generateFileStructureDescription(files)}
 
 请注意上述文件结构，确保转换后的代码能够在此项目结构中正确运行。`;
   }
-
-  return basePrompt;
+  prompt = prompt.replace('{{file_structure}}', fileStructure);
+  
+  return prompt;
 }
 
 function getVariableNamingTechniques(style: string): string {
@@ -123,29 +109,6 @@ function getCommentTechniques(style: string): string {
       return '- 对复杂代码不加注释或只添加极少的注释\n   - 在关键逻辑处省略注释';
     default:
       return '- 添加误导性注释\n   - 保留过时的注释\n   - 对复杂代码不加注释，对简单代码过度注释';
-  }
-}
-
-function getLanguageSpecificTechniques(language: string): string {
-  switch (language.toLowerCase()) {
-    case 'rust':
-      return '- Rust：滥用宏、不安全代码块、过度使用生命周期标注、复杂的特性约束';
-    case 'python':
-      return '- Python：滥用列表推导式、eval()、exec()、全局变量、不必要的元编程';
-    case 'javascript':
-    case 'js':
-    case 'typescript':
-    case 'ts':
-      return '- JavaScript/TypeScript：混合使用不同版本特性、滥用闭包和回调、过度使用原型链、滥用this';
-    case 'java':
-      return '- Java：过度设计类层次、不必要的设计模式应用、过度使用反射、创建不必要的接口';
-    case 'cpp':
-    case 'c++':
-      return '- C++：过度使用宏、指针、类型转换、复杂模板、多重继承';
-    case 'go':
-      return '- Go：滥用接口、过度使用反射、不必要的goroutine、滥用空接口';
-    default:
-      return '- 根据语言特性，使用该语言中最容易导致混淆和难以维护的特性和技巧';
   }
 }
 

@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, defineProps, defineEmits } from 'vue';
+import { ref, onMounted, onUnmounted, watch, defineProps, defineEmits } from 'vue';
 import * as monaco from 'monaco-editor';
 
 const props = defineProps({
@@ -87,11 +87,18 @@ onMounted(() => {
       scrollBeyondLastLine: false,
       readOnly: props.readOnly,
       fontSize: 14,
+      lineHeight: 21,
+      fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
       lineNumbers: 'on',
       renderLineHighlight: 'all',
       tabSize: 2,
       wordWrap: 'on',
-      padding: { top: 10 }
+      padding: { top: 10 },
+      fixedOverflowWidgets: true,
+      renderWhitespace: 'selection',
+      guides: {
+        indentation: true
+      }
     });
 
     editor.onDidChangeModelContent(() => {
@@ -99,8 +106,32 @@ onMounted(() => {
         emit('update:modelValue', editor.getValue());
       }
     });
+    
+    setTimeout(() => {
+      if (editor) {
+        editor.layout();
+      }
+    }, 100);
+    
+    window.addEventListener('resize', handleResize);
   }
 });
+
+onUnmounted(() => {
+  // 移除窗口大小变化的监听器
+  window.removeEventListener('resize', handleResize);
+  
+  // 销毁编辑器
+  if (editor) {
+    editor.dispose();
+  }
+});
+
+const handleResize = () => {
+  if (editor) {
+    editor.layout();
+  }
+};
 
 watch(() => props.modelValue, (newValue) => {
   if (editor && newValue !== editor.getValue()) {
@@ -236,6 +267,35 @@ const handleFileUpload = (event: Event) => {
 :deep(.monaco-editor .editor-container) {
   width: 100% !important;
   height: 100% !important;
+}
+
+:deep(.monaco-editor .view-lines) {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+  letter-spacing: 0 !important;
+  text-align: left !important;
+}
+
+:deep(.monaco-editor .lines-content) {
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  text-align: left !important;
+}
+
+:deep(.monaco-editor .cursor) {
+  width: 2px !important;
+}
+
+:deep(.monaco-editor-background) {
+  background-color: #1e1e1e !important;
+}
+
+:deep(.monaco-editor .view-line) {
+  width: 100% !important;
+  text-align: left !important;
+}
+
+:deep(.monaco-editor .view-line span) {
+  text-align: left !important;
 }
 
 @media (max-width: 768px) {

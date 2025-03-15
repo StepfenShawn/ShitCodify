@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, defineProps, defineEmits } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, defineProps, defineEmits } from 'vue';
 import { marked } from 'marked';
 
 const props = defineProps({
@@ -53,7 +53,6 @@ watch(() => props.modelValue, (newValue) => {
   localContent.value = newValue;
 });
 
-// 渲染 Markdown
 const renderedMarkdown = computed(() => {
   try {
     return marked(localContent.value);
@@ -63,17 +62,14 @@ const renderedMarkdown = computed(() => {
   }
 });
 
-// 更新内容
 const updateContent = () => {
   emit('update:modelValue', localContent.value);
 };
 
-// 切换编辑模式
 const toggleEditMode = () => {
   isEditMode.value = !isEditMode.value;
 };
 
-// 复制内容
 const copyContent = async () => {
   try {
     await navigator.clipboard.writeText(localContent.value);
@@ -90,9 +86,16 @@ const copyContent = async () => {
   }
 };
 
+const handleResize = () => {
+};
+
 // 初始化
 onMounted(() => {
-  // 可以在这里添加初始化逻辑
+  window.addEventListener('resize', handleResize);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
 });
 </script>
 
@@ -190,11 +193,12 @@ onMounted(() => {
   border: 1px solid #333;
   border-radius: 4px;
   padding: 12px;
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
   font-size: 14px;
   line-height: 1.5;
   resize: none;
   box-sizing: border-box;
+  text-align: left;
 }
 
 .editor-container {
@@ -207,6 +211,7 @@ onMounted(() => {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   line-height: 1.6;
   width: 100%;
+  text-align: left;
 }
 
 /* Markdown 样式 */
@@ -221,6 +226,7 @@ onMounted(() => {
   margin-bottom: 16px;
   font-weight: 600;
   line-height: 1.25;
+  text-align: left;
 }
 
 .markdown-container :deep(h1) {
@@ -246,6 +252,7 @@ onMounted(() => {
 .markdown-container :deep(p) {
   margin-top: 0;
   margin-bottom: 16px;
+  text-align: left;
 }
 
 .markdown-container :deep(a) {
@@ -262,10 +269,12 @@ onMounted(() => {
   padding-left: 2em;
   margin-top: 0;
   margin-bottom: 16px;
+  text-align: left;
 }
 
 .markdown-container :deep(li) {
   margin-top: 0.25em;
+  text-align: left;
 }
 
 .markdown-container :deep(code) {
@@ -287,6 +296,7 @@ onMounted(() => {
   border-radius: 6px;
   margin-top: 0;
   margin-bottom: 16px;
+  text-align: left;
 }
 
 .markdown-container :deep(pre code) {
@@ -297,6 +307,7 @@ onMounted(() => {
   word-break: normal;
   white-space: pre;
   overflow: visible;
+  text-align: left;
 }
 
 .markdown-container :deep(blockquote) {
@@ -304,6 +315,7 @@ onMounted(() => {
   color: #8b949e;
   border-left: 0.25em solid #30363d;
   margin: 0 0 16px 0;
+  text-align: left;
 }
 
 .markdown-container :deep(table) {
@@ -314,6 +326,7 @@ onMounted(() => {
   margin-bottom: 16px;
   border-spacing: 0;
   border-collapse: collapse;
+  text-align: left;
 }
 
 .markdown-container :deep(table tr) {
@@ -329,6 +342,7 @@ onMounted(() => {
 .markdown-container :deep(table td) {
   padding: 6px 13px;
   border: 1px solid #30363d;
+  text-align: left;
 }
 
 .markdown-container :deep(table th) {
