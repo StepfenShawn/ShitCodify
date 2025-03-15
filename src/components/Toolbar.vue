@@ -22,6 +22,12 @@
         <span class="button-icon">🔄</span>
         生成提示
       </button>
+      <!-- TODO: 生成代码 -->
+      <button class="convert-button">
+        <span class="button-icon">🔄</span>
+        生成代码(TODO)
+      </button>
+      
       <div class="copy-status" v-if="copyStatus">{{ copyStatus }}</div>
     </div>
     <div class="toolbar-right">

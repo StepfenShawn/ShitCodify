@@ -11,6 +11,23 @@
           <span class="button-icon">📋</span>
           复制
         </button>
+        <div class="dropdown">
+          <button @click="toggleModelDropdown" class="action-button model-button">
+            <span class="button-icon">🤖</span>
+            发送到大模型
+            <span class="dropdown-icon">▼</span>
+          </button>
+          <div v-if="showModelDropdown" class="dropdown-content">
+            <div 
+              v-for="model in availableModels" 
+              :key="model.name" 
+              class="dropdown-item"
+              @click="sendToModel(model)"
+            >
+              <span>{{ model.name }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="preview-content">
@@ -47,6 +64,41 @@ const emit = defineEmits(['update:modelValue']);
 const localContent = ref(props.modelValue);
 const isEditMode = ref(false);
 const copyStatus = ref('');
+const showModelDropdown = ref(false);
+
+// 可用的大模型列表
+const availableModels = [
+  {
+    name: 'DeepSeek',
+    url: 'https://chat.deepseek.com/',
+    promptParam: 'prompt'
+  },
+  { 
+    name: 'ChatGPT', 
+    url: 'https://chat.openai.com/',
+    promptParam: 'prompt'
+  },
+  { 
+    name: 'Claude', 
+    url: 'https://claude.ai/chats',
+    promptParam: 'text'
+  },
+  {
+    name: 'Gemini',
+    url: 'https://gemini.google.com/',
+    promptParam: 'prompt'
+  },
+  { 
+    name: '文心一言', 
+    url: 'https://yiyan.baidu.com/',
+    promptParam: 'query'
+  },
+  { 
+    name: '通义千问', 
+    url: 'https://qianwen.aliyun.com/',
+    promptParam: 'query'
+  }
+];
 
 // 监听 props 变化
 watch(() => props.modelValue, (newValue) => {
@@ -86,16 +138,42 @@ const copyContent = async () => {
   }
 };
 
+// 切换模型下拉菜单
+const toggleModelDropdown = () => {
+  showModelDropdown.value = !showModelDropdown.value;
+};
+
+// 点击外部关闭下拉菜单
+const closeDropdownOnClickOutside = (event: MouseEvent) => {
+  const dropdown = document.querySelector('.dropdown');
+  if (dropdown && !dropdown.contains(event.target as Node) && showModelDropdown.value) {
+    showModelDropdown.value = false;
+  }
+};
+
+const sendToModel = (model: any) => {
+  
+  let url = model.url;
+  url = `${model.url}`;
+  copyContent();
+  copyStatus.value = '已复制到剪贴板！请在模型中粘贴';
+  window.open(url, '_blank');
+  
+  showModelDropdown.value = false;
+};
+
 const handleResize = () => {
 };
 
 // 初始化
 onMounted(() => {
   window.addEventListener('resize', handleResize);
+  document.addEventListener('click', closeDropdownOnClickOutside);
 });
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
+  document.removeEventListener('click', closeDropdownOnClickOutside);
 });
 </script>
 
@@ -402,5 +480,52 @@ onUnmounted(() => {
   .preview-content {
     padding: 8px;
   }
+}
+
+/* 下拉菜单样式 */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-icon {
+  margin-left: 4px;
+  font-size: 10px;
+}
+
+.dropdown-content {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background-color: #2a2a2a;
+  min-width: 180px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  z-index: 1000;
+  margin-top: 4px;
+  overflow: hidden;
+  border: 1px solid #333;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  color: #e0e0e0;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  background-color: #3a3a3a;
+}
+
+.model-button {
+  background-color: #4caf50;
+  color: white;
+}
+
+.model-button:hover {
+  background-color: #45a049;
 }
 </style> 
