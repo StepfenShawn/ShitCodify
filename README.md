@@ -28,6 +28,11 @@ ShitCodify是一个能够将正常、易读、易维护的代码转换为难以�
 当前 ShitCodify 还不支持像 cursor, trae 那样的 AI Agent 模式, 现在的实现仅仅只是通过codebase生成一段Prompt。  
 直接访问 https://stepfenshawn.github.io/ShitCodify/#/ 生成 Prompt 后将其复制给大模型使用。  
 
+
+## "屎山"程度配置
+可以根据需要自定义"屎山"程度:  
+![配置示例](img/screenshot1.png)
+
 ## Build
 ```sh
 git clone git@github.com:StepfenShawn/ShitCodify.git
