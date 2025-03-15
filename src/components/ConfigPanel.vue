@@ -97,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, defineProps, defineEmits, computed } from 'vue';
+import { ref, defineProps, defineEmits, computed } from 'vue';
 
 const props = defineProps({
   selectedLanguage: {

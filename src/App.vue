@@ -44,7 +44,6 @@ const config = reactive({
   }
 });
 
-// 方法
 const handleConvert = async () => {
   const prompt = generatePrompt(
     sourceCode.value,
@@ -178,15 +177,14 @@ const setLanguageFromExtension = (extension: string) => {
   }
 };
 
-const handleLanguageChange = (language: string) => {
-  selectedLanguage.value = language;
-};
+// const handleLanguageChange = (language: string) => {
+//   selectedLanguage.value = language;
+// };
 
-const handleConfigChange = (newConfig: any) => {
-  config.shitty_code_settings = newConfig.shitty_code_settings;
-};
+// const handleConfigChange = (newConfig: any) => {
+//   config.shitty_code_settings = newConfig.shitty_code_settings;
+// };
 
-// 关闭配置模态窗口
 const closeConfigModal = () => {
   showConfigModal.value = false;
 };

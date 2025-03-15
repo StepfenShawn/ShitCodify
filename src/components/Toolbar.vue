@@ -17,7 +17,7 @@
       <button 
         class="convert-button" 
         @click="handleConvert" 
-        :disabled="!canConvert"
+        :disabled="!onConvert"
       >
         <span class="button-icon">🔄</span>
         转换代码
@@ -35,14 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, defineEmits } from 'vue';
-
-const props = defineProps({
-  canConvert: {
-    type: Boolean,
-    default: false
-  }
-});
+import { ref, defineEmits } from 'vue';
 
 const emit = defineEmits(['convert', 'open-config']);
 
