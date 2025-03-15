@@ -19,12 +19,20 @@
           </button>
           <div v-if="showModelDropdown" class="dropdown-content">
             <div 
-              v-for="model in availableModels" 
+              v-for="model in allModels" 
               :key="model.name" 
               class="dropdown-item"
               @click="sendToModel(model)"
             >
               <span>{{ model.name }}</span>
+              <span v-if="!model.isDefault" class="dropdown-item-actions">
+                <span class="edit-icon" @click.stop="editModel(model)">✏️</span>
+                <span class="delete-icon" @click.stop="deleteModel(model)">🗑️</span>
+              </span>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item add-model" @click.stop="openAddModelModal">
+              <span>➕ 添加自定义模型</span>
             </div>
           </div>
         </div>
@@ -41,12 +49,61 @@
       <div v-else class="markdown-container" v-html="renderedMarkdown"></div>
     </div>
     <div v-if="copyStatus" class="copy-status">{{ copyStatus }}</div>
+    
+    <!-- 添加/编辑模型对话框 -->
+    <div v-if="showAddModelModal" class="modal-overlay" @click="closeAddModelModal">
+      <div class="modal-dialog" @click.stop>
+        <h3>{{ editingModel ? '编辑模型' : '添加自定义模型' }}</h3>
+        <div class="form-group">
+          <label for="modelName">模型名称</label>
+          <input 
+            type="text" 
+            id="modelName" 
+            v-model="newModel.name" 
+            placeholder="例如: ChatGLM"
+            class="form-input"
+          />
+        </div>
+        <div class="form-group">
+          <label for="modelUrl">模型URL</label>
+          <input 
+            type="text" 
+            id="modelUrl" 
+            v-model="newModel.url" 
+            placeholder="例如: https://chatglm.cn/"
+            class="form-input"
+          />
+        </div>
+        <div class="form-group">
+          <label for="modelPromptParam">URL参数名 (可选)</label>
+          <input 
+            type="text" 
+            id="modelPromptParam" 
+            v-model="newModel.promptParam" 
+            placeholder="例如: prompt"
+            class="form-input"
+          />
+        </div>
+        <div class="form-actions">
+          <button @click="closeAddModelModal" class="cancel-button">取消</button>
+          <button @click="saveModel" class="save-button">保存</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, defineProps, defineEmits } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { marked } from 'marked';
+
+// 定义模型接口
+interface Model {
+  name: string;
+  url: string;
+  promptParam: string;
+  isDefault: boolean;
+}
 
 const props = defineProps({
   modelValue: {
@@ -65,40 +122,154 @@ const localContent = ref(props.modelValue);
 const isEditMode = ref(false);
 const copyStatus = ref('');
 const showModelDropdown = ref(false);
+const showAddModelModal = ref(false);
+const editingModel = ref<Model | null>(null);
 
-// 可用的大模型列表
-const availableModels = [
+// 默认模型列表
+const defaultModels: Model[] = [
   {
     name: 'DeepSeek',
     url: 'https://chat.deepseek.com/',
-    promptParam: 'prompt'
+    promptParam: '',
+    isDefault: true
   },
   { 
     name: 'ChatGPT', 
     url: 'https://chat.openai.com/',
-    promptParam: 'prompt'
+    promptParam: '',
+    isDefault: true
   },
   { 
     name: 'Claude', 
     url: 'https://claude.ai/chats',
-    promptParam: 'text'
+    promptParam: '',
+    isDefault: true
   },
   {
     name: 'Gemini',
     url: 'https://gemini.google.com/',
-    promptParam: 'prompt'
+    promptParam: '',
+    isDefault: true
   },
   { 
     name: '文心一言', 
     url: 'https://yiyan.baidu.com/',
-    promptParam: 'query'
+    promptParam: '',
+    isDefault: true
   },
   { 
     name: '通义千问', 
     url: 'https://qianwen.aliyun.com/',
-    promptParam: 'query'
+    promptParam: '',
+    isDefault: true
   }
 ];
+
+// 用户自定义模型
+const customModels = ref<Model[]>([]);
+
+// 新模型表单数据
+const newModel = ref<Model>({
+  name: '',
+  url: '',
+  promptParam: '',
+  isDefault: false
+});
+
+// 合并默认模型和自定义模型
+const allModels = computed((): Model[] => {
+  return [...defaultModels, ...customModels.value];
+});
+
+// 从 LocalStorage 加载自定义模型
+const loadCustomModels = (): void => {
+  const savedModels = localStorage.getItem('shitcodify_custom_models');
+  if (savedModels) {
+    try {
+      customModels.value = JSON.parse(savedModels);
+    } catch (error) {
+      console.error('加载自定义模型失败:', error);
+      customModels.value = [];
+    }
+  }
+};
+
+// 保存自定义模型到 LocalStorage
+const saveCustomModels = (): void => {
+  localStorage.setItem('shitcodify_custom_models', JSON.stringify(customModels.value));
+};
+
+// 打开添加模型对话框
+const openAddModelModal = (): void => {
+  showAddModelModal.value = true;
+  showModelDropdown.value = false;
+};
+
+// 添加或更新模型
+const saveModel = (): void => {
+  if (!newModel.value.name || !newModel.value.url) {
+    copyStatus.value = '模型名称和URL不能为空';
+    setTimeout(() => {
+      copyStatus.value = '';
+    }, 2000);
+    return;
+  }
+  
+  if (editingModel.value) {
+    // 更新现有模型
+    const index = customModels.value.findIndex(m => m.name === editingModel.value!.name);
+    if (index !== -1) {
+      customModels.value[index] = { ...newModel.value };
+    }
+  } else {
+    // 添加新模型
+    customModels.value.push({ ...newModel.value });
+  }
+  
+  saveCustomModels();
+  closeAddModelModal();
+  
+  // 显示成功消息
+  copyStatus.value = editingModel.value ? '模型已更新！' : '模型已添加！';
+  setTimeout(() => {
+    copyStatus.value = '';
+  }, 2000);
+};
+
+// 编辑模型
+const editModel = (model: Model): void => {
+  editingModel.value = model;
+  newModel.value = { ...model };
+  showAddModelModal.value = true;
+  showModelDropdown.value = false;
+};
+
+// 删除模型
+const deleteModel = (model: Model): void => {
+  const index = customModels.value.findIndex(m => m.name === model.name);
+  if (index !== -1) {
+    customModels.value.splice(index, 1);
+    saveCustomModels();
+    
+    // 显示成功消息
+    copyStatus.value = '模型已删除！';
+    setTimeout(() => {
+      copyStatus.value = '';
+    }, 2000);
+  }
+};
+
+// 关闭添加模型对话框
+const closeAddModelModal = (): void => {
+  showAddModelModal.value = false;
+  editingModel.value = null;
+  newModel.value = {
+    name: '',
+    url: '',
+    promptParam: '',
+    isDefault: false
+  };
+};
 
 // 监听 props 变化
 watch(() => props.modelValue, (newValue) => {
@@ -149,14 +320,23 @@ const closeDropdownOnClickOutside = (event: MouseEvent) => {
   if (dropdown && !dropdown.contains(event.target as Node) && showModelDropdown.value) {
     showModelDropdown.value = false;
   }
+  
+  const modal = document.querySelector('.modal-dialog');
+  if (modal && !modal.contains(event.target as Node) && showAddModelModal.value && event.target !== document.querySelector('.modal-overlay')) {
+    closeAddModelModal();
+  }
 };
 
-const sendToModel = (model: any) => {
-  
-  let url = model.url;
-  url = `${model.url}`;
-  copyContent();
-  copyStatus.value = '已复制到剪贴板！请在模型中粘贴';
+const sendToModel = (model: Model): void => {
+  let url = '';
+  if (model.promptParam) {
+    let param = encodeURIComponent(model.promptParam);
+    url = `${model.url}?${param}=${localContent.value}`;
+  } else {
+    copyContent();
+    copyStatus.value = '已复制到剪贴板！请在模型中粘贴';
+    url = `${model.url}`;
+  }
   window.open(url, '_blank');
   
   showModelDropdown.value = false;
@@ -169,6 +349,10 @@ const handleResize = () => {
 onMounted(() => {
   window.addEventListener('resize', handleResize);
   document.addEventListener('click', closeDropdownOnClickOutside);
+  loadCustomModels();
+  
+  // 调试信息
+  console.log('组件已挂载');
 });
 
 onUnmounted(() => {
@@ -510,6 +694,7 @@ onUnmounted(() => {
 .dropdown-item {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 10px 15px;
   color: #e0e0e0;
   cursor: pointer;
@@ -520,12 +705,127 @@ onUnmounted(() => {
   background-color: #3a3a3a;
 }
 
+.dropdown-item-actions {
+  display: flex;
+  gap: 8px;
+  opacity: 0.7;
+}
+
+.dropdown-item:hover .dropdown-item-actions {
+  opacity: 1;
+}
+
+.edit-icon, .delete-icon {
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.edit-icon:hover {
+  color: #58a6ff;
+}
+
+.delete-icon:hover {
+  color: #f44336;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background-color: #333;
+  margin: 4px 0;
+}
+
+.add-model {
+  color: #4caf50;
+}
+
 .model-button {
   background-color: #4caf50;
   color: white;
 }
 
 .model-button:hover {
+  background-color: #45a049;
+}
+
+/* 模态对话框样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-dialog {
+  background-color: #2a2a2a;
+  border-radius: 8px;
+  padding: 20px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-dialog h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #e0e0e0;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #e0e0e0;
+}
+
+.form-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #333;
+  border-radius: 4px;
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  font-size: 14px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.cancel-button, .save-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.cancel-button {
+  background-color: #4a4a4a;
+  color: #e0e0e0;
+}
+
+.save-button {
+  background-color: #4caf50;
+  color: white;
+}
+
+.cancel-button:hover {
+  background-color: #5a5a5a;
+}
+
+.save-button:hover {
   background-color: #45a049;
 }
 </style> 
