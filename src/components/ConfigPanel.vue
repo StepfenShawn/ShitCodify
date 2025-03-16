@@ -90,6 +90,10 @@
             <input type="checkbox" v-model="localConfig.shitty_code_settings.language_specific_techniques">
             使用语言特定技巧
           </label>
+          <label>
+            <input type="checkbox" v-model="localConfig.shitty_code_settings.code_only_output">
+            只输出代码
+          </label>
         </div>
       </div>
     </div>

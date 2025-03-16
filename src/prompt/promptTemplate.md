@@ -38,6 +38,8 @@
 
 {{easter_eggs}}
 
+{{code_only_output}}
+
 以下是需要转换的代码：
 
 ```{{language}}

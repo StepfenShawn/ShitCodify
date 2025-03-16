@@ -21,6 +21,7 @@ interface ShittyCodeConfig {
     error_handling_style: string;
     performance_style: string;
     readability_style: string;
+    code_only_output: boolean;
   };
 }
 
@@ -61,6 +62,12 @@ export function generatePrompt(
     ? '请在代码中添加一些有趣的彩蛋或隐藏的注释，但不要影响代码的功能。'
     : '';
   prompt = prompt.replace('{{easter_eggs}}', easterEggs);
+  
+  // 替换只输出代码选项
+  const codeOnlyOutput = config.shitty_code_settings.code_only_output
+    ? '请只输出转换后的代码，不要包含任何解释、说明或其他文本。直接以代码块形式返回结果。'
+    : '';
+  prompt = prompt.replace('{{code_only_output}}', codeOnlyOutput);
   
   // 替换代码
   prompt = prompt.replace('{{language}}', language);

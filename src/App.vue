@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, watch } from 'vue';
 import CodeEditor from './components/CodeEditor.vue';
 import MarkdownPreview from './components/MarkdownPreview.vue';
 import FileTree from './components/FileTree.vue';
@@ -8,7 +8,7 @@ import Toolbar from './components/Toolbar.vue';
 import { generatePrompt, copyToClipboard, filesToTree, fileToNode, type FileNode } from './utils/promptGenerator';
 
 // 状态
-const sourceCode = ref('// 在此处输入您的代码，或者上传文件');
+const sourceCode = ref('');
 const generatedPrompt = ref('');
 const selectedLanguage = ref('javascript');
 const projectFiles = ref<FileNode[]>([]);
@@ -42,19 +42,32 @@ const config = reactive({
     code_structure_style: 'nested',
     error_handling_style: 'ignore',
     performance_style: 'inefficient',
-    readability_style: 'poor'
+    readability_style: 'poor',
+    code_only_output: true
   }
 });
 
+// 自动更新生成的 prompt
+const updatePrompt = () => {
+  if (sourceCode.value.trim().length > 0) {
+    const prompt = generatePrompt(
+      sourceCode.value,
+      selectedLanguage.value,
+      config,
+      projectFiles.value.length > 0 ? projectFiles.value : undefined
+    );
+    generatedPrompt.value = prompt;
+  }
+};
+
+// 监听源代码、语言和配置的变化
+watch(sourceCode, updatePrompt);
+watch(selectedLanguage, updatePrompt);
+watch(() => config.shitty_code_settings, updatePrompt, { deep: true });
+
 const handleConvert = async () => {
-  const prompt = generatePrompt(
-    sourceCode.value,
-    selectedLanguage.value,
-    config,
-    projectFiles.value.length > 0 ? projectFiles.value : undefined
-  );
-  generatedPrompt.value = prompt;
-  await copyToClipboard(prompt);
+  updatePrompt();
+  await copyToClipboard(generatedPrompt.value);
 };
 
 const handleFileUpload = (files: File[]) => {
