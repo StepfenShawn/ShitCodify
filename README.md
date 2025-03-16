@@ -48,19 +48,6 @@ npm run dev
 npm run build
 ```
 
-## 自动部署
-本项目使用 GitHub Actions 实现自动构建和部署。每当代码推送到 main 或 master 分支时，GitHub Actions 会自动执行以下操作：
-
-1. 检出代码
-2. 设置 Node.js 环境
-3. 安装依赖
-4. 构建项目
-5. 将构建结果部署到 gh-pages 分支
-
-这样，您只需要关注代码开发，无需手动部署。项目会自动部署到 GitHub Pages 上，访问地址为：https://stepfenshawn.github.io/ShitCodify/
-
-如果您想手动触发部署，可以在 GitHub 仓库的 Actions 标签页中手动运行工作流。
-
 ## 贡献 Prompts
 所有语言的 prompts 模板在 [这个](src/prompt/) 目录下.  
 欢迎贡献代码、报告问题或提出建议！  
@@ -73,6 +60,17 @@ npm run build
 
 ## 免责声明
 本工具仅供学习和娱乐目的使用。请不要在生产环境或重要项目中使用生成的"屎山代码"。作者不对因使用本工具生成的代码而导致的任何问题负责。
+
+## 自动部署
+本项目使用 GitHub Actions 实现自动构建和部署。每当代码推送到 main 分支时，GitHub Actions 会自动执行以下操作：
+
+1. 检出代码
+2. 设置 Node.js 环境
+3. 安装依赖
+4. 构建项目
+5. 将构建结果部署到 gh-pages 分支
+
+这样，您只需要关注代码开发，无需手动部署。项目会自动部署到 GitHub Pages 上，访问地址为：https://stepfenshawn.github.io/ShitCodify/
 
 ## 许可证
 本项目采用MIT许可证。  

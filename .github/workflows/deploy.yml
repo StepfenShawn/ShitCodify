@@ -2,11 +2,11 @@ name: deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -38,4 +38,5 @@ jobs:
         with:
           folder: dist
           branch: gh-pages
-          clean: true 
+          clean: true
+          token: ${{ secrets.PAT }} 
