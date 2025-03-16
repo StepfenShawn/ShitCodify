@@ -11,6 +11,10 @@
           <span class="button-icon">📋</span>
           复制
         </button>
+        <button @click="toggleCursorRules" class="action-button rules-button" v-if="cursorRules">
+          <span class="button-icon">📜</span>
+          {{ showCursorRules ? '显示提示词' : '显示 .cursorrules' }}
+        </button>
         <div class="dropdown">
           <button @click="toggleModelDropdown" class="action-button model-button">
             <span class="button-icon">🤖</span>
@@ -94,7 +98,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, defineProps, defineEmits } from 'vue';
 import { marked } from 'marked';
 
 // 定义模型接口
@@ -113,6 +117,14 @@ const props = defineProps({
   title: {
     type: String,
     default: 'Markdown 预览'
+  },
+  cursorRules: {
+    type: String,
+    default: ''
+  },
+  showCursorRulesToggle: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -124,6 +136,31 @@ const copyStatus = ref('');
 const showModelDropdown = ref(false);
 const showAddModelModal = ref(false);
 const editingModel = ref<Model | null>(null);
+const showCursorRules = ref(false);
+
+// 切换显示 .cursorrules 文件
+const toggleCursorRules = () => {
+  showCursorRules.value = !showCursorRules.value;
+  if (showCursorRules.value) {
+    localContent.value = props.cursorRules;
+  } else {
+    localContent.value = props.modelValue;
+  }
+};
+
+// 监听 cursorRules 属性变化
+watch(() => props.cursorRules, (newValue) => {
+  if (showCursorRules.value) {
+    localContent.value = newValue;
+  }
+});
+
+// 监听 modelValue 属性变化
+watch(() => props.modelValue, (newValue) => {
+  if (!showCursorRules.value) {
+    localContent.value = newValue;
+  }
+});
 
 // 默认模型列表
 const defaultModels: Model[] = [
@@ -271,11 +308,6 @@ const closeAddModelModal = (): void => {
   };
 };
 
-// 监听 props 变化
-watch(() => props.modelValue, (newValue) => {
-  localContent.value = newValue;
-});
-
 const renderedMarkdown = computed(() => {
   try {
     return marked(localContent.value);
@@ -286,7 +318,9 @@ const renderedMarkdown = computed(() => {
 });
 
 const updateContent = () => {
-  emit('update:modelValue', localContent.value);
+  if (!showCursorRules.value) {
+    emit('update:modelValue', localContent.value);
+  }
 };
 
 const toggleEditMode = () => {
@@ -296,13 +330,13 @@ const toggleEditMode = () => {
 const copyContent = async () => {
   try {
     await navigator.clipboard.writeText(localContent.value);
-    copyStatus.value = '已复制到剪贴板！';
+    copyStatus.value = '复制成功！';
     setTimeout(() => {
       copyStatus.value = '';
     }, 2000);
-  } catch (error) {
-    console.error('复制失败:', error);
+  } catch (err) {
     copyStatus.value = '复制失败，请手动复制';
+    console.error('复制失败:', err);
     setTimeout(() => {
       copyStatus.value = '';
     }, 2000);
@@ -416,6 +450,10 @@ onUnmounted(() => {
   background-color: #8e44ad;
 }
 
+.rules-button {
+  background-color: #2c3e50;
+}
+
 .button-icon {
   margin-right: 6px;
   font-size: 14px;
@@ -431,6 +469,10 @@ onUnmounted(() => {
 
 .copy-button:hover {
   background-color: #9b59b6;
+}
+
+.rules-button:hover {
+  background-color: #34495e;
 }
 
 .action-button:active {

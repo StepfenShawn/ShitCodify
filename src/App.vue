@@ -6,11 +6,13 @@ import FileTree from './components/FileTree.vue';
 import ConfigPanel from './components/ConfigPanel.vue';
 import Toolbar from './components/Toolbar.vue';
 import { generatePrompt, copyToClipboard, filesToTree, fileToNode, type FileNode } from './utils/promptGenerator';
+import { generateCursorRules } from './utils/cursorRulesGenerator';
 
 // 状态
 const sourceCode = ref('');
 const generatedPrompt = ref('');
-const selectedLanguage = ref('javascript');
+const generatedCursorRules = ref('');
+const selectedLanguage = ref('python');
 const projectFiles = ref<FileNode[]>([]);
 const selectedFile = ref<FileNode | null>(null);
 const showConfigModal = ref(false);
@@ -34,6 +36,7 @@ const config = reactive({
       'readability'
     ],
     language_specific_techniques: true,
+    framework: '',
     preserve_functionality: true,
     add_easter_eggs: true,
     add_comments: true,
@@ -47,7 +50,7 @@ const config = reactive({
   }
 });
 
-// 自动更新生成的 prompt
+// 自动更新生成的 prompt 和 cursorrules
 const updatePrompt = () => {
   if (sourceCode.value.trim().length > 0) {
     const prompt = generatePrompt(
@@ -57,6 +60,13 @@ const updatePrompt = () => {
       projectFiles.value.length > 0 ? projectFiles.value : undefined
     );
     generatedPrompt.value = prompt;
+    
+    // 生成 .cursorrules 文件内容
+    const cursorRules = generateCursorRules(
+      selectedLanguage.value,
+      config
+    );
+    generatedCursorRules.value = cursorRules;
   }
 };
 
@@ -224,10 +234,9 @@ const closeConfigModal = () => {
       @open-config="showConfigModal = true"
     />
     
-    <!-- 主内容区域 -->
     <div class="main-content">
       <!-- 侧边栏 -->
-      <div class="sidebar" v-if="hasSidebar">
+      <div v-if="hasSidebar" class="sidebar">
         <div class="sidebar-header">
           <h3>项目文件</h3>
           <button class="sidebar-toggle" @click="toggleSidebar" title="隐藏侧边栏">
@@ -251,21 +260,54 @@ const closeConfigModal = () => {
         <span>▶</span>
       </button>
       
-      <!-- 编辑器区域 -->
-      <div class="editors" :class="{ 'with-sidebar': hasSidebar }">
-        <div class="editor-container">
+      <!-- 内容区域 -->
+      <div class="content-area" :class="{ 'with-sidebar': hasSidebar }">
+        <!-- 编辑器部分 -->
+        <div class="editor-section">
+          <div class="section-header">
+            <h3>源代码</h3>
+            <div class="language-selector">
+              <label for="language-select">语言:</label>
+              <select 
+                id="language-select" 
+                v-model="selectedLanguage" 
+                @change="updatePrompt"
+              >
+                <option value="javascript">JavaScript</option>
+                <option value="typescript">TypeScript</option>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+                <option value="csharp">C#</option>
+                <option value="cpp">C++</option>
+                <option value="go">Go</option>
+                <option value="rust">Rust</option>
+                <option value="php">PHP</option>
+                <option value="ruby">Ruby</option>
+                <option value="swift">Swift</option>
+                <option value="kotlin">Kotlin</option>
+                <option value="scala">Scala</option>
+                <option value="html">HTML</option>
+                <option value="css">CSS</option>
+                <option value="sql">SQL</option>
+              </select>
+            </div>
+          </div>
           <CodeEditor 
             v-model="sourceCode" 
-            :language="selectedLanguage"
-            :showUpload="true"
-            title="源代码"
+            :language="selectedLanguage" 
+            :show-upload="true" 
             @file-upload="handleFileUpload"
           />
         </div>
-        <div class="editor-container">
+        
+        <!-- 预览部分 -->
+        <div class="preview-section">
+          <div class="section-header">
+            <h3>生成的提示</h3>
+          </div>
           <MarkdownPreview 
             v-model="generatedPrompt" 
-            title="生成的提示"
+            :cursor-rules="generatedCursorRules"
           />
         </div>
       </div>
@@ -303,7 +345,9 @@ html, body {
   width: 100%;
   overflow: hidden;
 }
+</style>
 
+<style scoped>
 .app {
   display: flex;
   flex-direction: column;
@@ -322,42 +366,36 @@ html, body {
   display: flex;
   flex: 1;
   overflow: hidden;
-  width: 100%;
-  height: calc(100vh - 60px);
-  position: relative;
 }
 
 .sidebar {
   width: 250px;
-  min-width: 200px;
-  overflow: hidden;
+  background-color: #252526;
   border-right: 1px solid #333;
   background-color: #1e1e1e;
   height: 100%;
   display: flex;
   flex-direction: column;
-  transition: width 0.3s ease;
+  overflow: hidden;
 }
 
 .sidebar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 16px;
-  background-color: #2a2a2a;
+  padding: 10px;
   border-bottom: 1px solid #333;
 }
 
 .sidebar-header h3 {
   margin: 0;
   font-size: 16px;
-  font-weight: 500;
 }
 
 .sidebar-toggle {
   background: none;
   border: none;
-  color: #888;
+  color: #e0e0e0;
   cursor: pointer;
   font-size: 14px;
   padding: 4px;
@@ -378,60 +416,66 @@ html, body {
   left: 0;
   top: 50%;
   transform: translateY(-50%);
-  background-color: #2a2a2a;
-  border: none;
-  border-right: 1px solid #333;
-  color: #888;
+  background-color: #252526;
+  border: 1px solid #333;
+  border-left: none;
+  color: #e0e0e0;
+  padding: 10px 5px;
   cursor: pointer;
-  font-size: 14px;
-  padding: 8px 4px;
+  z-index: 10;
+}
+
+.content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .content-area {
+    flex-direction: row;
+  }
+}
+
+.content-area.with-sidebar {
+  margin-left: 0;
+}
+
+.editor-section, .preview-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 10px;
+  border-bottom: 1px solid #333;
+}
+
+@media (min-width: 768px) {
+  .editor-section, .preview-section {
+    border-bottom: none;
+  }
+  
+  .editor-section {
+    border-right: 1px solid #333;
+  }
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.language-selector {
   display: flex;
   align-items: center;
-  justify-content: center;
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
-  z-index: 5;
-  transition: all 0.2s ease;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-}
-
-.sidebar-show-button:hover {
-  color: #e0e0e0;
-  background-color: #3a3a3a;
-}
-
-.editor-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  padding: 16px;
-  height: 100%;
-  box-sizing: border-box;
-}
-
-.editors {
-  display: flex;
-  flex: 1;
-  gap: 16px;
-  overflow: hidden;
-  height: 100%;
-  width: 100%;
-  transition: width 0.3s ease, margin-left 0.3s ease;
-  padding-left: 0;
-}
-
-.editors.with-sidebar {
-  width: calc(100% - 250px);
-}
-
-.editor-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-width: 400px;
-  height: 100%;
 }
 
 /* 弹窗样式 */
@@ -491,7 +535,7 @@ html, body {
 .close-button {
   background: none;
   border: none;
-  color: #888;
+  color: #e0e0e0;
   font-size: 24px;
   cursor: pointer;
   padding: 0;

@@ -36,6 +36,18 @@
         </div>
 
         <div class="config-section">
+          <h4>框架</h4>
+          <div class="config-option">
+            <select v-model="localConfig.shitty_code_settings.framework">
+              <option value="">无</option>
+              <option v-for="framework in availableFrameworks" :key="framework.value" :value="framework.value">
+                {{ framework.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="config-section">
           <h4>注释风格</h4>
           <div class="config-option">
             <select v-model="localConfig.shitty_code_settings.comment_style">
@@ -122,6 +134,7 @@ const props = defineProps({
           'readability'
         ],
         language_specific_techniques: true,
+        framework: '',
         preserve_functionality: true,
         add_easter_eggs: true,
         add_comments: true,
@@ -158,6 +171,23 @@ const availableTechniques = [
   { label: '错误处理', value: 'error_handling' },
   { label: '性能', value: 'performance' },
   { label: '可读性', value: 'readability' }
+];
+
+const availableFrameworks = [
+  { label: 'Angular', value: 'angular' },
+  { label: 'ASP.NET Core', value: 'asp.net core' },
+  { label: 'Django', value: 'django' },
+  { label: 'Express', value: 'express' },
+  { label: 'FastAPI', value: 'fastapi' },
+  { label: 'Flask', value: 'flask' },
+  { label: 'Laravel', value: 'laravel' },
+  { label: 'NestJS', value: 'nestjs' },
+  { label: 'Next.js', value: 'next.js' },
+  { label: 'React', value: 'react' },
+  { label: 'Ruby on Rails', value: 'ruby on rails' },
+  { label: 'Spring Boot', value: 'spring boot' },
+  { label: 'Svelte/SvelteKit', value: 'svelte' },
+  { label: 'Vue.js', value: 'vue.js' }
 ];
 </script>
 

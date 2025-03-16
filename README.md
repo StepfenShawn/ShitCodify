@@ -2,10 +2,8 @@
 一款AI驱动的祖传代码炼金师，将优雅代码『精心』重构为屎山💩。An AI-powered legacy code alchemist that carefully transforms clean code into shit code.  
 
 ## 简介
-> 还在担心 AI 时代抢走你的饭碗? 那就用魔法打败魔法。  
--- 鲁迅  
-
-ShitCodify是一个能够将正常、易读、易维护的代码转换为难以理解、难以维护但仍然能够正常工作的"屎山代码"的工具。它利用大型语言模型（如GPT-4）来分析你的代码，并应用各种"反模式"和不良实践来降低代码的可读性和可维护性，同时保持代码的功能不变。
+ShitCodify是一个能够将正常、易读、易维护的代码转换为难以理解、难以维护但仍然能够正常工作的"屎山代码"的工具。
+它利用大型语言模型（如GPT-4）来分析你的代码，并应用各种"反模式"和不良实践来降低代码的可读性和可维护性，同时保持代码的功能不变。
 
 ## 为什么需要这个工具?
 - 工作保障计划: 确保你的代码像谜题一样存在, 提升你在公司不可替代的地位
@@ -26,13 +24,19 @@ ShitCodify是一个能够将正常、易读、易维护的代码转换为难以�
 
 ## 如何使用?
 当前 ShitCodify 还不支持像 cursor, trae 那样的 AI Agent 模式, 现在的实现仅仅只是通过codebase生成一段Prompt。  
-直接访问 https://stepfenshawn.github.io/ShitCodify/#/ 生成 Prompt 后将其复制给大模型使用。  
+直接访问 https://stepfenshawn.github.io/ShitCodify/#/ 生成 Prompt 后将其复制给大模型使用。    
+![截图](img/screenshot3.png)
 
 
 ## "屎山"程度配置
 可以根据需要自定义"屎山"程度:  
-![配置示例](img/screenshot1.png)
-
+![配置示例](img/screenshot1.png)  
+自定义跳转到的大模型网页:  
+![配置示例](img/screenshot2.png)
+示例:  
+![正常代码](img/example1.png)
+通过gpt-4o转化后:  
+![屎山代码](img/shit1.png)
 ## Build
 ```sh
 git clone git@github.com:StepfenShawn/ShitCodify.git
@@ -70,7 +74,7 @@ npm run build
 4. 构建项目
 5. 将构建结果部署到 gh-pages 分支
 
-这样，您只需要关注代码开发，无需手动部署。项目会自动部署到 GitHub Pages 上，访问地址为：https://stepfenshawn.github.io/ShitCodify/
+这样，您只需要关注代码开发，无需手动部署。项目会自动部署到 GitHub Pages 上，访问地址为：https://stepfenshawn.github.io/ShitCodify/#/
 
 ## 许可证
 本项目采用MIT许可证。  
