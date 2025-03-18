@@ -168,7 +168,7 @@ export function filesToTree(files: File[]): FileNode[] {
     const fileNode: FileNode = {
       name: fileName,
       path: file.webkitRelativePath,
-      isDirectory: false
+      isDirectory: false,
     };
     
     if (parentPath && pathMap[parentPath]) {
@@ -188,6 +188,16 @@ export function fileToNode(file: File): FileNode {
     path: file.name,
     isDirectory: false
   };
+}
+
+// 辅助函数：将树节点转换为文件
+export function nodeToFile(node: FileNode): File {          
+  const file = new File([node.content || ''], node.name);
+  Object.defineProperty(file, 'webkitRelativePath', {
+    value: node.path,
+    writable: false
+  });
+  return file;
 }
 
 // 辅助函数：复制文本到剪贴板

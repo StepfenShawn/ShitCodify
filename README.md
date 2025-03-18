@@ -39,7 +39,7 @@ ShitCodify是一个能够将正常、易读、易维护的代码转换为难以�
 ## 使用示例:  
 一段十分规范的Rust代码:   
 ![正常代码](img/example1.png)
-通过gpt-4o转化成屎山后:    
+通过gpt-4o转化成屎山后:     
 ![屎山代码](img/shit1.png)
 ## Build
 ```sh

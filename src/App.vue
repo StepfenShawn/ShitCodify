@@ -5,7 +5,7 @@ import MarkdownPreview from './components/MarkdownPreview.vue';
 import FileTree from './components/FileTree.vue';
 import ConfigPanel from './components/ConfigPanel.vue';
 import Toolbar from './components/Toolbar.vue';
-import { generatePrompt, copyToClipboard, filesToTree, fileToNode, type FileNode } from './utils/promptGenerator';
+import { generatePrompt, copyToClipboard, filesToTree, fileToNode, nodeToFile, type FileNode } from './utils/promptGenerator';
 import { generateCursorRules } from './utils/cursorRulesGenerator';
 
 // 状态
@@ -17,6 +17,7 @@ const projectFiles = ref<FileNode[]>([]);
 const selectedFile = ref<FileNode | null>(null);
 const showConfigModal = ref(false);
 const showSidebar = ref(true); // 控制侧边栏显示状态
+const uploadedFiles = ref<File[]>([]);
 
 // 计算属性
 const canConvert = computed(() => sourceCode.value.trim().length > 0);
@@ -83,6 +84,9 @@ const handleConvert = async () => {
 const handleFileUpload = (files: File[]) => {
   if (files.length === 0) return;
   
+  // 保存上传的文件，以便后续访问
+  uploadedFiles.value = files;
+  
   if (files.length === 1 && !files[0].webkitRelativePath) {
     // 单个文件上传
     const file = files[0];
@@ -133,17 +137,77 @@ const handleFileSelect = (file: FileNode) => {
       setLanguageFromExtension(extension);
     } else {
       // 否则尝试从上传的文件中加载内容
-      const uploadedFiles = document.querySelector('input[type="file"]') as HTMLInputElement;
-      if (uploadedFiles && uploadedFiles.files) {
-        const files = Array.from(uploadedFiles.files);
-        loadFileContent(file, files);
-      }
+      loadFileContent(file, projectFiles.value);
     }
   }
 };
 
-const loadFileContent = (file: FileNode, files: File[]) => {
-  const uploadedFile = files.find(f => f.webkitRelativePath === file.path || f.name === file.name);
+const loadFileContent = (file: FileNode, files: FileNode[] | File[]) => {
+    // 辅助函数: 将文件树展平
+    const flattenFiles = (nodes: FileNode[]): FileNode[] => {
+      let result: FileNode[] = [];
+      for (const node of nodes) {
+        if (!node.isDirectory) {
+          result.push(node);
+        }
+        if (node.children) {
+          result = result.concat(flattenFiles(node.children));
+        }
+      }
+      return result;
+    };
+
+  // 如果传入的是FileNode数组，从中查找所有实际文件
+  if (files.length > 0 && 'isDirectory' in files[0]) {
+   
+    const allFileNodes = flattenFiles(files as FileNode[]);
+    const targetNode = allFileNodes.find(node => node.path === file.path);
+
+    if (targetNode) {
+      if (targetNode.content) {
+        file.content = targetNode.content;
+        sourceCode.value = targetNode.content;
+      } else {
+        // 使用缓存的上传文件列表而不是DOM查询
+        let foundFile = null;
+        if (uploadedFiles.value.length > 0) {
+          console.log("从缓存的上传文件中查找:", uploadedFiles.value.length, "个文件");
+          foundFile = uploadedFiles.value.find(f => {
+            console.log("比较:", f.webkitRelativePath, targetNode.path, f.name, targetNode.name);
+            return f.webkitRelativePath === targetNode.path || f.name === targetNode.name;
+          });
+        }
+        
+        if (foundFile) {
+          console.log("找到匹配文件:", foundFile.name);
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            if (e.target?.result) {
+              const content = e.target.result as string;
+              file.content = content;
+              targetNode.content = content;
+              sourceCode.value = content;
+            } else {
+              console.error('文件内容读取失败', e);
+            }
+          };
+          reader.onerror = (e) => {
+            console.error('文件读取错误', e);
+          };
+          reader.readAsText(foundFile);
+        } else {
+          console.warn(`找不到匹配的文件: ${targetNode.path || targetNode.name}`);
+        }
+      }
+      // 根据文件扩展名设置语言
+      const extension = file.name.split('.').pop()?.toLowerCase() || '';
+      setLanguageFromExtension(extension);
+      return;
+    }
+  }
+  
+  // 如果是File数组，按原方式处理
+  const uploadedFile = (files as File[]).find(f => f.webkitRelativePath === file.path || f.name === file.name);
   if (uploadedFile) {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -224,6 +288,40 @@ const handleConfigChange = (newConfig: any) => {
 const closeConfigModal = () => {
   showConfigModal.value = false;
 };
+
+const handleFileRemove = (file: FileNode) => {
+  // 从文件树中移除文件
+  const removeFile = (files: FileNode[]): FileNode[] => {
+    return files.filter(f => {
+      if (f.path === file.path) {
+        return false;
+      }
+      if (f.children) {
+        f.children = removeFile(f.children);
+      }
+      return true;
+    });
+  };
+  
+  projectFiles.value = removeFile(projectFiles.value);
+  
+  // 如果移除的是当前选中的文件，清空编辑器
+  if (selectedFile.value?.path === file.path) {
+    selectedFile.value = null;
+    sourceCode.value = '';
+  }
+};
+
+const handleFileEdit = (file: FileNode) => {
+  if (!file.isDirectory) {
+    selectedFile.value = file;
+    sourceCode.value = file.content || '';
+    
+    // 根据文件扩展名设置语言
+    const extension = file.name.split('.').pop()?.toLowerCase() || '';
+    setLanguageFromExtension(extension);
+  }
+};
 </script>
 
 <template>
@@ -239,14 +337,16 @@ const closeConfigModal = () => {
       <div v-if="hasSidebar" class="sidebar">
         <div class="sidebar-header">
           <h3>项目文件</h3>
-          <button class="sidebar-toggle" @click="toggleSidebar" title="隐藏侧边栏">
-            <span>◀</span>
+          <button class="sidebar-toggle" @click="showSidebar = false">
+            &times;
           </button>
         </div>
         <FileTree 
           :files="projectFiles" 
+          :selected-path="selectedFilePath" 
           @file-select="handleFileSelect"
-          :selected-path="selectedFilePath"
+          @file-remove="handleFileRemove"
+          @file-edit="handleFileEdit"
         />
       </div>
       

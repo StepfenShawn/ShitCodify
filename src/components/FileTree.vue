@@ -13,6 +13,8 @@
           :file="file" 
           :selected-path="selectedPath"
           @file-select="handleFileSelect"
+          @file-remove="handleFileRemove"
+          @file-edit="handleFileEdit"
         />
       </ul>
     </div>
@@ -42,7 +44,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['file-select']);
+const emit = defineEmits(['file-select', 'file-remove', 'file-edit']);
 
 const rootFiles = computed(() => {
   return props.files;
@@ -50,6 +52,14 @@ const rootFiles = computed(() => {
 
 const handleFileSelect = (file: FileNode) => {
   emit('file-select', file);
+};
+
+const handleFileRemove = (file: FileNode) => {
+  emit('file-remove', file);
+};
+
+const handleFileEdit = (file: FileNode) => {
+  emit('file-edit', file);
 };
 </script>
 
